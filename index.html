@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Green Earth</title>
+        <link rel="stylesheet" href="./public/output.css" />
+
+        <!-- font awesome cdn -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+            integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        />
+
+        <!-- inter font cdn  -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <!-- NavBar -->
+        <div class="bg-[#15803d] shadow-sm py-3 flex items-center">
+            <div class="flex items-center gap-4 px-28">
+                <div class="dropdown">
+                    <div
+                        tabindex="0"
+                        role="button"
+                        class="btn btn-ghost lg:hidden"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 6h16M4 12h8m-8 6h16"
+                            />
+                        </svg>
+                    </div>
+                    <ul
+                        tabindex="-1"
+                        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+                    >
+                        <li><a>About</a></li>
+                        <li>
+                            <a>Gallery</a>
+                        </li>
+                        <li><a>Plant A Tree</a></li>
+                    </ul>
+                </div>
+                <span class="text-xl font-bold text-white">Green Earth</span>
+            </div>
+            <div class="hidden lg:flex text-white flex-1 justify-center">
+                <ul class="menu menu-horizontal px-1">
+                    <li><a>About</a></li>
+                    <li>
+                        <a> Gallery </a>
+                    </li>
+                    <li><a>Plant A Tree</a></li>
+                </ul>
+            </div>
+            <div class="px-28">
+                <a
+                    class="btn rounded-full bg-[#facc15] shadow-none border-none text-[#15803d]"
+                    >Plant A Tree</a
+                >
+            </div>
+        </div>
+    </body>
+</html>
