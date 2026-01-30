@@ -113,6 +113,104 @@
             />
         </div>
 
+        <!-- category section -->
+        <div class="bg-[#f0fdf4] py-16 px-4">
+            <div class="max-w-400 mx-auto">
+                <h2 class="text-4xl font-bold text-center text-[#1f2937] mb-12">
+                    Choose Your Trees
+                </h2>
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Categories Sidebar -->
+                    <div class="lg:w-1/8">
+                        <div class="p-0">
+                            <h3
+                                class="text-lg font-semibold text-[#1f2937] mb-2"
+                            >
+                                Categories
+                            </h3>
+                            <div class="space-y-1 mt-2" id="categories">
+                                <!-- Categories will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trees Grid and Cart -->
+                    <div class="lg:w-3/3">
+                        <div class="flex flex-col xl:flex-row gap-8">
+                            <!-- Trees Grid -->
+                            <div class="flex-1">
+                                <!-- Loading Spinner -->
+                                <div
+                                    id="loadingSpinner"
+                                    class="text-center py-8 hidden"
+                                >
+                                    <div class="inline-block">
+                                        <div
+                                            class="w-12 h-12 border-4 border-[#15803d] border-t-transparent rounded-full animate-spin"
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <!-- Trees Grid -->
+                                <div
+                                    id="treesGrid"
+                                    class="grid grid-cols-1 md:grid-cols-3 gap-4"
+                                >
+                                    <!-- Tree cards will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- Shopping Cart -->
+                            <div class="xl:w-64">
+                                <div
+                                    class="bg-[#f0fdf4] p-6 rounded-lg sticky top-20 h-fit"
+                                >
+                                    <h3
+                                        class="text-xl font-bold text-[#1f2937] mb-4"
+                                    >
+                                        Your Cart
+                                    </h3>
+                                    <div
+                                        id="cartItems"
+                                        class="space-y-3 mb-4 max-h-96 overflow-y-auto"
+                                    >
+                                        <!-- Cart items will be loaded here -->
+                                    </div>
+                                    <div class="border-t border-[#15803d] pt-4">
+                                        <div
+                                            class="flex justify-between text-lg font-bold text-[#1f2937]"
+                                        >
+                                            <span>Total:</span>
+                                            <span id="cartTotal">৳0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Tree Details -->
+        <dialog id="treeModal" class="modal">
+            <div class="modal-box max-w-2xl">
+                <form method="dialog">
+                    <button
+                        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                    >
+                        ✕
+                    </button>
+                </form>
+                <div id="modalContent" class="py-4">
+                    <!-- Modal content will be loaded here -->
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button title="Close"></button>
+            </form>
+        </dialog>
+
         <!-- About Our Campaign section -->
         <div class="bg-[#f0fdf4] py-16 px-4">
             <div class="max-w-6xl mx-auto">
@@ -230,5 +328,8 @@
             <div class="max-w-6xl mx-auto text-center text-white">
                 <p>&copy; 2025 Green Earth. All rights reserved.</p>
             </div>
+        </div>
+
+        <script src="./script.js"></script>
     </body>
 </html>
