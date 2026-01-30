@@ -1,8 +1,7 @@
 // API Base URL
-
 const API_BASE = "https://openapi.programming-hero.com/api";
 
-// Fallback sample categories
+// Sample categories for fallback
 const sampleCategories = [
     { id: 1, name: "Fruit Trees" },
     { id: 2, name: "Flowering Trees" },
@@ -31,10 +30,8 @@ const treeModal = document.getElementById("treeModal");
 
 // Initialize App
 const init = () => {
-    // Ensure DOM is ready
     if (!categoriesContainer) {
         console.error("DOM not ready. categories container missing.");
-        setTimeout(init, 100);
         return;
     }
     loadCategories();
@@ -42,52 +39,64 @@ const init = () => {
 };
 
 // Load Categories from API
-const loadCategories = async () => {
-    try {
-        showSpinner(true);
-        const response = await fetch(`${API_BASE}/categories`);
-        const data = await response.json();
-        categories = data.data || data.categories || [];
+const loadCategories = () => {
+    showSpinner(true);
 
-        // Fallback to sample if empty
-        if (!Array.isArray(categories) || categories.length === 0) {
-            console.warn("Categories empty, using sample data");
+    fetch(`${API_BASE}/categories`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            categories = data.data || data.categories || [];
+
+            // Fallback to sample if empty
+            if (!Array.isArray(categories) || categories.length === 0) {
+                console.warn("Categories empty, using sample data");
+                categories = sampleCategories;
+            }
+
+            renderCategories();
+            // Load all plants by default
+            loadAllPlants();
+        })
+        .catch((error) => {
+            console.error("Error loading categories:", error);
             categories = sampleCategories;
-        }
-
-        renderCategories();
-        // Load all plants by default
-        loadAllPlants();
-    } catch (error) {
-        console.error("Error loading categories:", error);
-        categories = sampleCategories;
-        renderCategories();
-        loadAllPlants();
-    } finally {
-        showSpinner(false);
-    }
+            renderCategories();
+            loadAllPlants();
+        })
+        .finally(() => {
+            showSpinner(false);
+        });
 };
 
 // Load all plants (All Trees)
-const loadAllPlants = async () => {
-    try {
-        showSpinner(true);
-        const response = await fetch(`${API_BASE}/plants`);
-        const data = await response.json();
-        // API may return different shapes; try common fallbacks
-        const plantsRaw = data.data || data.plants || data || [];
-        const plants = Array.isArray(plantsRaw)
-            ? plantsRaw.map(normalizePlant)
-            : [];
-        currentCategory = "all";
-        renderPlants(plants);
-        updateCategoryButtons();
-    } catch (error) {
-        console.error("Error loading all plants:", error);
-        showError("Failed to load all plants");
-    } finally {
-        showSpinner(false);
-    }
+const loadAllPlants = () => {
+    showSpinner(true);
+
+    fetch(`${API_BASE}/plants`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            // API may return different shapes
+            const plantsRaw = data.data || data.plants || data || [];
+            const plants = Array.isArray(plantsRaw)
+                ? plantsRaw.map(normalizePlant)
+                : [];
+
+            currentCategory = "all";
+            renderPlants(plants);
+            updateCategoryButtons();
+        })
+        .catch((error) => {
+            console.error("Error loading all plants:", error);
+            showError("Failed to load all plants");
+            renderPlants([]);
+        })
+        .finally(() => {
+            showSpinner(false);
+        });
 };
 
 // Render Categories
@@ -102,7 +111,8 @@ const renderCategories = () => {
     // Add "All Trees" button first
     const allBtn = document.createElement("button");
     allBtn.textContent = "All Trees";
-    allBtn.className = `w-full text-left px-3 py-2 rounded-md transition text-sm bg-[#15803d] text-white font-medium`;
+    allBtn.className =
+        "w-full text-left px-3 py-2 rounded-md transition text-sm bg-[#15803d] text-white font-medium";
     allBtn.id = "category-all";
     allBtn.addEventListener("click", () => {
         currentCategory = "all";
@@ -110,11 +120,6 @@ const renderCategories = () => {
         updateCategoryButtons();
     });
     categoriesContainer.appendChild(allBtn);
-
-    if (!Array.isArray(categories)) {
-        console.warn("Categories is not an array:", categories);
-        return;
-    }
 
     categories.forEach((category) => {
         const btn = document.createElement("button");
@@ -143,64 +148,67 @@ const renderCategories = () => {
 };
 
 // Load Plants by Category from API
-const loadPlantsByCategory = async (categoryId) => {
-    try {
-        showSpinner(true);
-        const response = await fetch(`${API_BASE}/category/${categoryId}`);
-        const data = await response.json();
-        const plantsRaw = data.data || data.plants || data || [];
-        let plants = Array.isArray(plantsRaw)
-            ? plantsRaw.map(normalizePlant)
-            : [];
+const loadPlantsByCategory = (categoryId) => {
+    showSpinner(true);
 
-        // If category endpoint returned empty, try fetching all plants and filter by category name
-        if (!plants.length) {
-            try {
-                const allResp = await fetch(`${API_BASE}/plants`);
-                const allData = await allResp.json();
-                const allRaw = allData.data || allData.plants || allData || [];
-                const allPlants = Array.isArray(allRaw)
-                    ? allRaw.map(normalizePlant)
-                    : [];
+    fetch(`${API_BASE}/category/${categoryId}`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            const plantsRaw = data.data || data.plants || data || [];
+            let plants = Array.isArray(plantsRaw)
+                ? plantsRaw.map(normalizePlant)
+                : [];
 
-                // categoryId may be numeric id or a category name string
-                const catIdStr = String(categoryId).toLowerCase();
-                plants = allPlants.filter((p) => {
-                    if (!p.category) return false;
-                    return (
-                        p.category.toLowerCase().includes(catIdStr) ||
-                        String(p.id) === String(categoryId)
-                    );
-                });
-            } catch (innerErr) {
-                console.warn("Failed to fetch all plants fallback:", innerErr);
+            // If category endpoint returned empty, try fetching all plants
+            if (!plants.length) {
+                return fetchAllPlantsAndFilter(categoryId);
+            } else {
+                renderPlants(plants);
+                return null;
             }
-        }
+        })
+        .then((filteredPlants) => {
+            if (filteredPlants) {
+                renderPlants(filteredPlants);
+            }
+        })
+        .catch((error) => {
+            console.error("Error loading plants:", error);
+            showError("Failed to load plants");
+            renderPlants([]);
+        })
+        .finally(() => {
+            showSpinner(false);
+        });
+};
 
-        renderPlants(plants);
-    } catch (error) {
-        console.error("Error loading plants:", error);
-        // On API error, try fallback: fetch all plants and filter by category name
-        try {
-            const allResp = await fetch(`${API_BASE}/plants`);
-            const allData = await allResp.json();
-            const allRaw = allData.data || allData.plants || allData || [];
+// Helper function to fetch all plants and filter by category
+const fetchAllPlantsAndFilter = (categoryId) => {
+    return fetch(`${API_BASE}/plants`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            const allRaw = data.data || data.plants || data || [];
             const allPlants = Array.isArray(allRaw)
                 ? allRaw.map(normalizePlant)
                 : [];
+
             const catIdStr = String(categoryId).toLowerCase();
-            const plants = allPlants.filter(
-                (p) =>
-                    p.category && p.category.toLowerCase().includes(catIdStr),
-            );
-            renderPlants(plants.length ? plants : allPlants);
-        } catch (innerErr) {
-            console.error("Fallback failed:", innerErr);
-            showError("Failed to load plants");
-        }
-    } finally {
-        showSpinner(false);
-    }
+            return allPlants.filter((p) => {
+                if (!p.category) return false;
+                return (
+                    p.category.toLowerCase().includes(catIdStr) ||
+                    String(p.id) === String(categoryId)
+                );
+            });
+        })
+        .catch((error) => {
+            console.error("Error in fetchAllPlantsAndFilter:", error);
+            return [];
+        });
 };
 
 // Render Plants Grid
@@ -218,7 +226,6 @@ const renderPlants = (plants) => {
         card.className =
             "bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer";
 
-        // Ensure fields exist after normalization
         const name = plant.name || plant.title || "Unnamed Plant";
         const image = plant.image || plant.img || plant.image_url || "";
         const description =
@@ -264,69 +271,72 @@ const renderPlants = (plants) => {
 };
 
 // Open Plant Modal
-const openPlantModal = async (plant) => {
-    try {
-        showSpinner(true);
+const openPlantModal = (plant) => {
+    showSpinner(true);
 
-        // Fetch plant details
-        const response = await fetch(`${API_BASE}/plant/${plant.id}`);
-        const data = await response.json();
-        const detailedPlant = data.data || plant;
+    fetch(`${API_BASE}/plant/${plant.id}`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            const detailedPlant = data.data || plant;
 
-        // Update modal content
-        const modalContent = document.getElementById("modalContent");
-        modalContent.innerHTML = `
-            <h2 class="text-3xl font-bold text-[#1f2937] mb-4">${detailedPlant.name}</h2>
-            <img src="${detailedPlant.image}" alt="${detailedPlant.name}"
-                class="w-full h-96 object-cover rounded-lg mb-6"
-                onerror="this.src='https://via.placeholder.com/600x400?text=${encodeURIComponent(detailedPlant.name)}'">
-            <div class="space-y-4">
-                <div>
-                    <h3 class="text-lg font-semibold text-[#1f2937] mb-2">Description</h3>
-                    <p class="text-[#4b5563]">${detailedPlant.description}</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
+            // Update modal content
+            const modalContent = document.getElementById("modalContent");
+            modalContent.innerHTML = `
+                <h2 class="text-3xl font-bold text-[#1f2937] mb-4">${detailedPlant.name}</h2>
+                <img src="${detailedPlant.image}" alt="${detailedPlant.name}"
+                    class="w-full h-96 object-cover rounded-lg mb-6"
+                    onerror="this.src='https://via.placeholder.com/600x400?text=${encodeURIComponent(detailedPlant.name)}'">
+                <div class="space-y-4">
                     <div>
-                        <p class="text-sm text-[#6b7280]">Category</p>
-                        <p class="text-lg font-semibold text-[#1f2937]">${detailedPlant.category}</p>
+                        <h3 class="text-lg font-semibold text-[#1f2937] mb-2">Description</h3>
+                        <p class="text-[#4b5563]">${detailedPlant.description}</p>
                     </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-[#6b7280]">Category</p>
+                            <p class="text-lg font-semibold text-[#1f2937]">${detailedPlant.category}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-[#6b7280]">Price</p>
+                            <p class="text-lg font-semibold text-[#15803d]">৳${detailedPlant.price}</p>
+                        </div>
+                    </div>
+                    ${
+                        detailedPlant.rating
+                            ? `
                     <div>
-                        <p class="text-sm text-[#6b7280]">Price</p>
-                        <p class="text-lg font-semibold text-[#15803d]">৳${detailedPlant.price}</p>
+                        <p class="text-sm text-[#6b7280]">Rating</p>
+                        <p class="text-lg font-semibold text-[#1f2937]">⭐ ${detailedPlant.rating}</p>
                     </div>
+                    `
+                            : ""
+                    }
+                    <button class="w-full btn bg-[#15803d] hover:bg-[#166534] text-white border-none rounded-full py-3 modal-add-btn">
+                        Add to Cart
+                    </button>
                 </div>
-                ${
-                    detailedPlant.rating
-                        ? `
-                <div>
-                    <p class="text-sm text-[#6b7280]">Rating</p>
-                    <p class="text-lg font-semibold text-[#1f2937]">⭐ ${detailedPlant.rating}</p>
-                </div>
-                `
-                        : ""
-                }
-                <button class="w-full btn bg-[#15803d] hover:bg-[#166534] text-white border-none rounded-full py-3 modal-add-btn">
-                    Add to Cart
-                </button>
-            </div>
-        `;
+            `;
 
-        // Add to cart from modal
-        modalContent
-            .querySelector(".modal-add-btn")
-            .addEventListener("click", () => {
-                addToCart(detailedPlant);
-                treeModal.close();
-            });
+            // Add to cart from modal
+            modalContent
+                .querySelector(".modal-add-btn")
+                .addEventListener("click", () => {
+                    addToCart(detailedPlant);
+                    treeModal.close();
+                });
 
-        // Show modal
-        treeModal.showModal();
-    } catch (error) {
-        console.error("Error loading plant details:", error);
-        showError("Failed to load plant details");
-    } finally {
-        showSpinner(false);
-    }
+            // Show modal
+            treeModal.showModal();
+        })
+        .catch((error) => {
+            console.error("Error loading plant details:", error);
+            showError("Failed to load plant details");
+        })
+        .finally(() => {
+            showSpinner(false);
+        });
 };
 
 // Add to Cart
@@ -401,12 +411,10 @@ const updateCartTotal = () => {
 const updateCategoryButtons = () => {
     document.querySelectorAll("#categories button").forEach((btn) => {
         const categoryId = btn.id.replace("category-", "");
-        // compare loosely to support numeric ids and 'all'
         if (categoryId == currentCategory) {
             btn.className =
                 "w-full text-left px-3 py-2 rounded-md transition text-sm bg-[#15803d] text-white";
         } else {
-            // keep compact default style for non-active
             btn.className =
                 "w-full text-left px-3 py-1 rounded transition text-sm text-[#065f46] hover:bg-[#e6f6ec]";
         }
@@ -469,7 +477,7 @@ const showError = (message) => {
 
 // Attach Event Listeners
 const attachEventListeners = () => {
-    // Close modal on backdrop click or X button
+    // Close modal on X button
     const closeBtn = treeModal.querySelector(".btn-circle");
     if (closeBtn) {
         closeBtn.addEventListener("click", () => {
@@ -477,7 +485,7 @@ const attachEventListeners = () => {
         });
     }
 
-    // Also allow clicking outside the modal to close it
+    // allow clicking outside the modal to close it
     treeModal.addEventListener("click", (e) => {
         if (e.target === treeModal) {
             treeModal.close();
